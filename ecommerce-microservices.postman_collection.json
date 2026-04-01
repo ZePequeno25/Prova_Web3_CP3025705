@@ -1,0 +1,296 @@
+{
+  "info": {
+    "name": "E-commerce Microservices - Prova",
+    "description": "Colecao para validacao da prova pratica de microservicos. Inclui os endpoints minimos exigidos e um fluxo completo reproduzivel.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "1d9c7042-26f7-4dc1-9a91-6c7b4539c001"
+  },
+  "variable": [
+    { "key": "catalogo_base_url", "value": "http://127.0.0.1:8001" },
+    { "key": "usuarios_base_url", "value": "http://127.0.0.1:8002" },
+    { "key": "pedidos_base_url", "value": "http://127.0.0.1:8003" },
+    { "key": "estoque_base_url", "value": "http://127.0.0.1:8004" },
+    { "key": "pagamento_base_url", "value": "http://127.0.0.1:8005" },
+    { "key": "produto_id", "value": "" },
+    { "key": "usuario_id", "value": "" },
+    { "key": "pedido_id", "value": "" },
+    { "key": "valor_total", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Fluxo Completo - Pedido com Sucesso",
+      "description": "Rode os requests na ordem para reproduzir o fluxo completo: criar usuario, criar produto, carregar estoque, criar pedido e consultar status.",
+      "item": [
+        {
+          "name": "1 - Criacao de usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{usuarios_base_url}}/users",
+              "host": ["{{usuarios_base_url}}"],
+              "path": ["users"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Usuario Fluxo\",\n  \"email\": \"usuario.fluxo.{{$timestamp}}@teste.com\",\n  \"senha\": \"123456\"\n}"
+            },
+            "description": "Obrigatorio: criacao de usuario."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('usuario_id', jsonData.id);",
+                  "pm.test('Usuario ID salvo', function () { pm.expect(pm.collectionVariables.get('usuario_id')).to.exist; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2 - Criacao de produto",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{catalogo_base_url}}/products",
+              "host": ["{{catalogo_base_url}}"],
+              "path": ["products"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Produto Fluxo {{$timestamp}}\",\n  \"descricao\": \"Produto para teste de fluxo completo\",\n  \"preco\": 99.9\n}"
+            },
+            "description": "Obrigatorio: criacao de produto."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('produto_id', jsonData.id);",
+                  "pm.test('Produto ID salvo', function () { pm.expect(pm.collectionVariables.get('produto_id')).to.exist; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3 - Verificacao/ajuste de estoque",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{estoque_base_url}}/inventory/{{produto_id}}?quantidade=10",
+              "host": ["{{estoque_base_url}}"],
+              "path": ["inventory", "{{produto_id}}"],
+              "query": [
+                { "key": "quantidade", "value": "10" }
+              ]
+            },
+            "description": "Necessario para garantir sucesso do pedido (estoque suficiente)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4 - Criacao de pedido (processa pagamento e confirma)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{pedidos_base_url}}/orders",
+              "host": ["{{pedidos_base_url}}"],
+              "path": ["orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario_id\": {{usuario_id}},\n  \"itens\": [\n    {\n      \"produto_id\": {{produto_id}},\n      \"quantidade\": 2\n    }\n  ]\n}"
+            },
+            "description": "Obrigatorio: criacao de pedido. Este endpoint executa verificacao de estoque, processamento de pagamento e confirmacao final do pedido."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('pedido_id', jsonData.id);",
+                  "pm.collectionVariables.set('valor_total', jsonData.valor_total);",
+                  "pm.test('Pedido ID salvo', function () { pm.expect(pm.collectionVariables.get('pedido_id')).to.exist; });",
+                  "pm.test('Status final valido', function () { pm.expect(['PAGO', 'CANCELADO']).to.include(jsonData.status); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5 - Consulta de status do pedido",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{pedidos_base_url}}/orders/{{pedido_id}}",
+              "host": ["{{pedidos_base_url}}"],
+              "path": ["orders", "{{pedido_id}}"]
+            },
+            "description": "Obrigatorio: consulta de status do pedido."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('ID confere com pedido criado', function () { pm.expect(String(jsonData.id)).to.eql(String(pm.collectionVariables.get('pedido_id'))); });",
+                  "pm.test('Status final disponivel', function () { pm.expect(['PAGO', 'CANCELADO']).to.include(jsonData.status); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6 - Consulta de estoque apos pedido",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{estoque_base_url}}/inventory/{{produto_id}}",
+              "host": ["{{estoque_base_url}}"],
+              "path": ["inventory", "{{produto_id}}"]
+            },
+            "description": "Evidencia da verificacao/decremento de estoque no fluxo completo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Endpoints Minimos Obrigatorios",
+      "description": "Requests isolados exigidos no enunciado.",
+      "item": [
+        {
+          "name": "Criacao de produto",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{catalogo_base_url}}/products",
+              "host": ["{{catalogo_base_url}}"],
+              "path": ["products"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Produto Minimo {{$timestamp}}\",\n  \"descricao\": \"Requisito minimo\",\n  \"preco\": 49.9\n}"
+            }
+          }
+        },
+        {
+          "name": "Criacao de usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{usuarios_base_url}}/users",
+              "host": ["{{usuarios_base_url}}"],
+              "path": ["users"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Usuario Minimo\",\n  \"email\": \"usuario.minimo.{{$timestamp}}@teste.com\",\n  \"senha\": \"123456\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Criacao de pedido",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{pedidos_base_url}}/orders",
+              "host": ["{{pedidos_base_url}}"],
+              "path": ["orders"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario_id\": {{usuario_id}},\n  \"itens\": [\n    {\n      \"produto_id\": {{produto_id}},\n      \"quantidade\": 1\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Processamento de pagamento",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{pagamento_base_url}}/payments",
+              "host": ["{{pagamento_base_url}}"],
+              "path": ["payments"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pedido_id\": {{pedido_id}},\n  \"usuario_id\": {{usuario_id}},\n  \"valor\": {{valor_total}},\n  \"metodo_pagamento\": \"PIX\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Consulta de status do pedido",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{pedidos_base_url}}/orders/{{pedido_id}}",
+              "host": ["{{pedidos_base_url}}"],
+              "path": ["orders", "{{pedido_id}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

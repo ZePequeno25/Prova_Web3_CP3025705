@@ -133,6 +133,41 @@ python3 start-all.py
 
 ---
 
+## 📦 Colecao de Requisicoes (Postman)
+
+O repositorio inclui a colecao pronta para importacao no Postman:
+
+- `ecommerce-microservices.postman_collection.json`
+
+Tambem inclui export para Insomnia:
+
+- `ecommerce-microservices.insomnia_collection.json`
+
+### Conteudo da colecao
+
+- Criacao de produto
+- Criacao de usuario
+- Criacao de pedido
+- Processamento de pagamento
+- Consulta de status do pedido
+- Fluxo completo com sucesso (inclui verificacao/decremento de estoque, pagamento e confirmacao final)
+
+### Como reproduzir no Postman
+
+1. Importar o arquivo `ecommerce-microservices.postman_collection.json`
+2. Iniciar os 5 servicos
+3. Executar a pasta **Fluxo Completo - Pedido com Sucesso** na ordem dos requests
+4. Verificar os testes automaticos e os IDs salvos nas variaveis da colecao
+
+### Como reproduzir no Insomnia
+
+1. Importar o arquivo `ecommerce-microservices.insomnia_collection.json`
+2. Selecionar o workspace **E-commerce Microservices - Prova**
+3. Ajustar variaveis no ambiente (se necessario): `usuario_id`, `produto_id`, `pedido_id`, `valor_total`
+4. Executar a pasta **Fluxo Completo - Pedido com Sucesso** na ordem dos requests
+
+---
+
 ## 🧩 Documentação de API (Redoc)
 
 Cada serviço expõe documentação Swagger/OpenAPI em:

@@ -1,0 +1,236 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-04-01T12:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2026.1.0",
+  "resources": [
+    {
+      "_id": "wrk_ecommerce_microservices",
+      "_type": "workspace",
+      "name": "E-commerce Microservices - Prova",
+      "description": "Colecao Insomnia para requisitos da prova pratica de microservicos.",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_ecommerce_base",
+      "_type": "environment",
+      "parentId": "wrk_ecommerce_microservices",
+      "name": "Base Environment",
+      "data": {
+        "catalogo_base_url": "http://127.0.0.1:8001",
+        "usuarios_base_url": "http://127.0.0.1:8002",
+        "pedidos_base_url": "http://127.0.0.1:8003",
+        "estoque_base_url": "http://127.0.0.1:8004",
+        "pagamento_base_url": "http://127.0.0.1:8005",
+        "usuario_id": 1,
+        "produto_id": 1,
+        "pedido_id": 1,
+        "valor_total": 199.8
+      }
+    },
+    {
+      "_id": "fld_fluxo_completo",
+      "_type": "request_group",
+      "parentId": "wrk_ecommerce_microservices",
+      "name": "Fluxo Completo - Pedido com Sucesso",
+      "description": "Execute na ordem para reproduzir o fluxo completo de compra.",
+      "environment": {}
+    },
+    {
+      "_id": "req_fluxo_1_criar_usuario",
+      "_type": "request",
+      "parentId": "fld_fluxo_completo",
+      "name": "1 - Criacao de usuario",
+      "method": "POST",
+      "url": "{{ _.usuarios_base_url }}/users",
+      "description": "Obrigatorio: criacao de usuario.",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Usuario Fluxo\",\n  \"email\": \"usuario.fluxo@teste.com\",\n  \"senha\": \"123456\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_fluxo_2_criar_produto",
+      "_type": "request",
+      "parentId": "fld_fluxo_completo",
+      "name": "2 - Criacao de produto",
+      "method": "POST",
+      "url": "{{ _.catalogo_base_url }}/products",
+      "description": "Obrigatorio: criacao de produto.",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Produto Fluxo\",\n  \"descricao\": \"Produto para teste de fluxo completo\",\n  \"preco\": 99.9\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_fluxo_3_estoque",
+      "_type": "request",
+      "parentId": "fld_fluxo_completo",
+      "name": "3 - Verificacao/ajuste de estoque",
+      "method": "PUT",
+      "url": "{{ _.estoque_base_url }}/inventory/{{ _.produto_id }}?quantidade=10",
+      "description": "Necessario para garantir sucesso do pedido.",
+      "body": {},
+      "parameters": [
+        {
+          "name": "quantidade",
+          "value": "10"
+        }
+      ],
+      "headers": []
+    },
+    {
+      "_id": "req_fluxo_4_criar_pedido",
+      "_type": "request",
+      "parentId": "fld_fluxo_completo",
+      "name": "4 - Criacao de pedido (processa pagamento)",
+      "method": "POST",
+      "url": "{{ _.pedidos_base_url }}/orders",
+      "description": "Obrigatorio: criacao de pedido com verificacao de estoque, pagamento e confirmacao final.",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"usuario_id\": {{ _.usuario_id }},\n  \"itens\": [\n    {\n      \"produto_id\": {{ _.produto_id }},\n      \"quantidade\": 2\n    }\n  ]\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_fluxo_5_status_pedido",
+      "_type": "request",
+      "parentId": "fld_fluxo_completo",
+      "name": "5 - Consulta de status do pedido",
+      "method": "GET",
+      "url": "{{ _.pedidos_base_url }}/orders/{{ _.pedido_id }}",
+      "description": "Obrigatorio: consulta de status do pedido.",
+      "body": {},
+      "parameters": [],
+      "headers": []
+    },
+    {
+      "_id": "req_fluxo_6_consulta_estoque",
+      "_type": "request",
+      "parentId": "fld_fluxo_completo",
+      "name": "6 - Consulta de estoque apos pedido",
+      "method": "GET",
+      "url": "{{ _.estoque_base_url }}/inventory/{{ _.produto_id }}",
+      "description": "Evidencia de verificacao/decremento de estoque no fluxo.",
+      "body": {},
+      "parameters": [],
+      "headers": []
+    },
+    {
+      "_id": "fld_endpoints_minimos",
+      "_type": "request_group",
+      "parentId": "wrk_ecommerce_microservices",
+      "name": "Endpoints Minimos Obrigatorios",
+      "description": "Requests isolados exigidos no enunciado.",
+      "environment": {}
+    },
+    {
+      "_id": "req_min_1_produto",
+      "_type": "request",
+      "parentId": "fld_endpoints_minimos",
+      "name": "Criacao de produto",
+      "method": "POST",
+      "url": "{{ _.catalogo_base_url }}/products",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Produto Minimo\",\n  \"descricao\": \"Requisito minimo\",\n  \"preco\": 49.9\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_min_2_usuario",
+      "_type": "request",
+      "parentId": "fld_endpoints_minimos",
+      "name": "Criacao de usuario",
+      "method": "POST",
+      "url": "{{ _.usuarios_base_url }}/users",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Usuario Minimo\",\n  \"email\": \"usuario.minimo@teste.com\",\n  \"senha\": \"123456\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_min_3_pedido",
+      "_type": "request",
+      "parentId": "fld_endpoints_minimos",
+      "name": "Criacao de pedido",
+      "method": "POST",
+      "url": "{{ _.pedidos_base_url }}/orders",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"usuario_id\": {{ _.usuario_id }},\n  \"itens\": [\n    {\n      \"produto_id\": {{ _.produto_id }},\n      \"quantidade\": 1\n    }\n  ]\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_min_4_pagamento",
+      "_type": "request",
+      "parentId": "fld_endpoints_minimos",
+      "name": "Processamento de pagamento",
+      "method": "POST",
+      "url": "{{ _.pagamento_base_url }}/payments",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"pedido_id\": {{ _.pedido_id }},\n  \"usuario_id\": {{ _.usuario_id }},\n  \"valor\": {{ _.valor_total }},\n  \"metodo_pagamento\": \"PIX\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_min_5_status_pedido",
+      "_type": "request",
+      "parentId": "fld_endpoints_minimos",
+      "name": "Consulta de status do pedido",
+      "method": "GET",
+      "url": "{{ _.pedidos_base_url }}/orders/{{ _.pedido_id }}",
+      "body": {},
+      "parameters": [],
+      "headers": []
+    }
+  ]
+}
