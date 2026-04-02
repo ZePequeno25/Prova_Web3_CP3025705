@@ -4,3 +4,4 @@ SQLAlchemy-Utils
 pymysql
 python-dotenv
 pydantic[email]
+cryptography
